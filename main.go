@@ -276,7 +276,7 @@ func sendPeerProbes(sendingIP, peer string, pollRate time.Duration, localBindPor
 				log.Fatalf("Failed to send probe packet! %v, aborting", err)
 			}
 			packetN++
-			metricBadPackets.WithLabelValues(
+			metricFlowPacketsSent.WithLabelValues(
 				runtimeConfig.ResolveFriendlyName(sendingAddr.IP),
 				runtimeConfig.ResolveFriendlyName(peerAddress.IP),
 				fmt.Sprint(peerAddress.Port)).Inc()
