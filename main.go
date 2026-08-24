@@ -261,7 +261,7 @@ func sendPeerProbes(sendingIP, peer string, pollRate time.Duration, localBindPor
 		case PP := <-replies:
 			lossTrackingRing.Write(PP.Seq)
 			lagTrackingRing.Write(uint64(PP.Latency.Microseconds()))
-			metricFlowPacketsReceivedZZ.WithLabelValues(
+			metricFlowPacketsReceived.WithLabelValues(
 				runtimeConfig.ResolveFriendlyName(sendingAddr.IP),
 				runtimeConfig.ResolveFriendlyName(peerAddress.IP),
 				fmt.Sprint(peerAddress.Port)).Inc()
