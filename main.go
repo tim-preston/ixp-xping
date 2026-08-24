@@ -448,6 +448,7 @@ var metricFlowPacketsSent = prometheus.NewCounterVec(
 		Help: "Total number of probe packets sent to {local,peer,peerport} L4 flow",
 	},
 	[]string{"local", "peer", "port"},
+)
 
 var metricFlowPacketsReceived = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
