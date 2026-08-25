@@ -261,6 +261,10 @@ func sendPeerProbes(sendingIP, peer string, pollRate time.Duration, localBindPor
 		case PP := <-replies:
 			lossTrackingRing.Write(PP.Seq)
 			lagTrackingRing.Write(uint64(PP.Latency.Microseconds()))
+			metricFlowPacketsReceived.WithLabelValues(
+				runtimeConfig.ResolveFriendlyName(sendingAddr.IP),
+				runtimeConfig.ResolveFriendlyName(peerAddress.IP),
+				fmt.Sprint(peerAddress.Port)).Inc()
 		case <-poll.C:
 			packet := makeProbePacket(uint64(packetN))
 			n, _, err := sendingSocket.WriteMsgUDP(
@@ -276,6 +280,10 @@ func sendPeerProbes(sendingIP, peer string, pollRate time.Duration, localBindPor
 				log.Fatalf("Failed to send probe packet! %v, aborting", err)
 			}
 			packetN++
+			metricFlowPacketsSent.WithLabelValues(
+				runtimeConfig.ResolveFriendlyName(sendingAddr.IP),
+				runtimeConfig.ResolveFriendlyName(peerAddress.IP),
+				fmt.Sprint(peerAddress.Port)).Inc()
 			bufferPool.Put(packet)
 		case <-updateMetricsTick.C:
 			loss := lossTrackingRing.GetPacketLoss(uint64(packetN))
@@ -406,6 +414,8 @@ func init() {
 	prometheus.MustRegister(metricFlowLoss)
 	prometheus.MustRegister(metricFlowLatency)
 	prometheus.MustRegister(metricBadPackets)
+	prometheus.MustRegister(metricFlowPacketsSent)
+	prometheus.MustRegister(metricFlowPacketsReceived)
 }
 
 var metricFlowLoss = prometheus.NewGaugeVec(
@@ -430,4 +440,20 @@ var metricBadPackets = prometheus.NewGaugeVec(
 		Help: "invalid ixp-xping packets received",
 	},
 	[]string{"reason"},
+)
+
+var metricFlowPacketsSent = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "xping_peer_packets_sent_flow_total",
+		Help: "Total number of probe packets sent to {local,peer,peerport} L4 flow",
+	},
+	[]string{"local", "peer", "port"},
+)
+
+var metricFlowPacketsReceived = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "xping_peer_packets_received_flow_total",
+		Help: "Total number of probe packets recieved from {local,peer,peerport} L4 flow",
+	},
+	[]string{"local", "peer", "port"},
 )
